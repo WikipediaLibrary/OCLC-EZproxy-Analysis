@@ -15,7 +15,7 @@ start_date = datetime.date(year=2022, month=11, day=1)
 stop_date = datetime.date(year=2023, month=1, day=31)
 date_list = date_range_list(start_date, stop_date)
 
-file_path = 'q4'
+file_path = 'data'
 
 user_sessions = {}
 
