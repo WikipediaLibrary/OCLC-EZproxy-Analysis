@@ -1,42 +1,65 @@
-import datetime
 import requests
 from dotenv import load_dotenv, dotenv_values
 import os
 import requests
 import urllib3
+import re
+from pathlib import Path, PurePath
+
+
+from parser import LogListParser
 
 load_dotenv()
 urllib3.disable_warnings()
 
-def date_range_list(start_date, end_date):
-    # Return list of datetime.date objects between start_date and end_date (inclusive).
-    date_list = []
-    curr_date = start_date
-    while curr_date <= end_date:
-        date_list.append(curr_date.strftime('%Y%m%d'))
-        curr_date += datetime.timedelta(days=1)
-    return date_list
-
-
-start_date = datetime.date(year=2023, month=12, day=1)
-stop_date = datetime.date(year=2024, month=6, day=1)
-date_list = date_range_list(start_date, stop_date)
-
-s = requests.Session()
-
-login_url = 'https://login.wikipedialibrary.idm.oclc.org/login'
-log_list_url = 'https://wikipedialibrary.idm.oclc.org/loggedin/admlog/loglisting.htm'
+start_date = 20231201
+end_date = 20240601
+session = requests.Session()
+hostname = os.getenv('hostname', '')
+login_url = 'https://login.{}/login'.format(hostname)
+log_list_url = 'https://{}/loggedin/admlog/loglisting.htm'.format(hostname)
 
 # Get cookie
-s.get(login_url, verify=False)
-
+session.get(login_url, verify=False)
+# Set form data, including our desired destination
+data = {
+    'user': os.getenv('user', ''),
+    'pass': os.getenv('password', ''),
+    'url': log_list_url,
+}
 # Login - set credentials in .env
-login_response = s.post(login_url, data={'user': os.getenv('user', ''), 'pass': os.getenv('password', '')}, verify=False)
-
-response = s.get(log_list_url, verify=False)
-
-session_partner_url = "https://wikipedialibrary.idm.oclc.org/loggedin/admaudit/{}.txt"
-user_session_url = "https://wikipedialibrary.idm.oclc.org/loggedin/admlog/spu{}.log"  # Can also be .gz  # Needs to be manually downloaded.
-for date in date_list:
-    session_partner_file = s.get(session_partner_url.format(date))
-    open('data/{}.txt'.format(date), 'wb').write(session_partner_file.content)
+response = session.post(
+    login_url,
+    data=data,
+    verify=False,
+    stream=True
+)
+# Bail on error
+if response.status_code != 200:
+    exit
+# Scrape the log listing
+for line in response.iter_lines():
+    parser = LogListParser()
+    fragment = line.decode('utf-8')
+    log_types = ['spu', 'auditfile']
+    # We're interested in specific log files
+    if not any(log_type in fragment for log_type in log_types):
+        continue
+    # capture the href value in the html fragment
+    parser.feed(fragment)
+    # check the date embedded in the filename
+    match = re.search(r'\d{8}', parser.link)
+    date = int(match.group())
+    if date < start_date or date > end_date:
+        print('{} not in date range'.format(date))
+        continue
+    # Handle the download
+    log_url = 'https://wikipedialibrary.idm.oclc.org/loggedin/admlog/{}'.format(parser.link)
+    log_filepath = 'data/{}'.format(PurePath(parser.link).name)
+    local_log_file = Path(log_filepath)
+    if local_log_file.is_file():
+        print('{} exists; skipping download'.format(log_filepath))
+        continue
+    print('fetching {}'.format(log_url))
+    remote_log_file = session.get(log_url)
+    open(log_filepath, 'wb').write(remote_log_file.content)
