@@ -13,8 +13,8 @@ from parser import LogListParser
 load_dotenv()
 urllib3.disable_warnings()
 
-start_date = 20231201
-end_date = 20240601
+start_date = int(os.getenv('start_date', 20240101 ))
+end_date = int(os.getenv('end_date', 20240630))
 session = requests.Session()
 hostname = os.getenv('hostname', '')
 login_url = 'https://login.{}/login'.format(hostname)
