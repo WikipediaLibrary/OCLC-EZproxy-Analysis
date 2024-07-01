@@ -29,17 +29,17 @@ data = {
     'url': log_list_url,
 }
 # Login - set credentials in .env
-response = session.post(
+log_list_response = session.post(
     login_url,
     data=data,
     verify=False,
     stream=True
 )
 # Bail on error
-if response.status_code != 200:
+if log_list_response.status_code != 200:
     exit
 # Scrape the log listing
-for line in response.iter_lines():
+for line in log_list_response.iter_lines():
     parser = LogListParser()
     fragment = line.decode('utf-8')
     log_types = ['spu', 'auditfile']
@@ -65,11 +65,14 @@ for line in response.iter_lines():
         print('{} exists; skipping download'.format(log_filepath))
         continue
     print('fetching {}'.format(log_url))
-    remote_log_file = session.get(log_url)
+    log_file_response = session.get(log_url)
+    if log_file_response.status_code != 200:
+        print('{} error; download failed'.format(log_file_response.status_code))
+        continue
     if log_purepath.suffix == '.gz':
         print('decompressing {}'.format(log_url))
-        content = gzip.decompress(remote_log_file.content)
+        content = gzip.decompress(log_file_response.content)
     else:
-        content = remote_log_file.content
+        content = log_file_response.content
     print('saving {}'.format(log_filepath))
     open(log_filepath, 'wb').write(content)
