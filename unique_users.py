@@ -1,10 +1,11 @@
 import requests
 from dotenv import load_dotenv, dotenv_values
+import gzip
 import os
-import requests
-import urllib3
-import re
 from pathlib import Path, PurePath
+import requests
+import re
+import urllib3
 
 
 from parser import LogListParser
@@ -55,11 +56,20 @@ for line in response.iter_lines():
         continue
     # Handle the download
     log_url = 'https://wikipedialibrary.idm.oclc.org/loggedin/admlog/{}'.format(parser.link)
-    log_filepath = 'data/{}'.format(PurePath(parser.link).name)
+    log_purepath = PurePath(parser.link)
+    log_filepath = 'data/{}'.format(log_purepath.name)
+    if log_purepath.suffix == '.gz':
+        log_filepath = 'data/{}'.format(log_purepath.stem)
     local_log_file = Path(log_filepath)
     if local_log_file.is_file():
         print('{} exists; skipping download'.format(log_filepath))
         continue
     print('fetching {}'.format(log_url))
     remote_log_file = session.get(log_url)
-    open(log_filepath, 'wb').write(remote_log_file.content)
+    if log_purepath.suffix == '.gz':
+        print('decompressing {}'.format(log_url))
+        content = gzip.decompress(remote_log_file.content)
+    else:
+        content = remote_log_file.content
+    print('saving {}'.format(log_filepath))
+    open(log_filepath, 'wb').write(content)
