@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from datetime import timedelta
 from pathlib import Path
 from tldextract import extract
@@ -60,11 +59,19 @@ for date in date_list:
                 if username not in tracker[domain][vhost]:
                     tracker[domain][vhost].append(username)
 
-ordered_tracker = OrderedDict(sorted(tracker.items()))
-print("unique users by vhost")
+ordered_tracker = dict(sorted(tracker.items()))
+print("unique ezproxy users by domain and host:")
 for domain in ordered_tracker:
     print("{}:".format(domain))
+    domain_users = []
     for vhost in ordered_tracker[domain]:
-        count = len(ordered_tracker[domain][vhost])
+        vhost_users = ordered_tracker[domain][vhost]
+        count = len(vhost_users)
         data = "\t{vhost}:\t{count}"
         print(data.format(vhost=vhost, count=count))
+        for username in vhost_users:
+            if username not in domain_users:
+                domain_users.append(ordered_tracker[domain][vhost])
+    count = len(domain_users)
+    data = "\ttotal:\t{count}"
+    print(data.format(domain=domain, count=count))
