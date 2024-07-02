@@ -60,18 +60,26 @@ for date in date_list:
                     tracker[domain][vhost].append(username)
 
 ordered_tracker = dict(sorted(tracker.items()))
-print("unique ezproxy users by domain and host:")
+banner = "unique ezproxy users by domain and host between {start_date} and {end_date}:"
+print(banner.format(start_date=config.start_date, end_date=config.end_date))
 for domain in ordered_tracker:
-    print("{}:".format(domain))
     domain_users = []
+    domain_template = "{domain}: {count}"
+    vhost_template = "{vhost}: {count}"
+    multi_vhosts = len(ordered_tracker[domain]) > 1
+    vhost_data = []
     for vhost in ordered_tracker[domain]:
         vhost_users = ordered_tracker[domain][vhost]
         count = len(vhost_users)
-        data = "\t{vhost}:\t{count}"
-        print(data.format(vhost=vhost, count=count))
-        for username in vhost_users:
-            if username not in domain_users:
-                domain_users.append(ordered_tracker[domain][vhost])
-    count = len(domain_users)
-    data = "\ttotal:\t{count}"
-    print(data.format(domain=domain, count=count))
+        # Track unique users across subdomains
+        if multi_vhosts:
+            vhost_template = " - {vhost}: {count}"
+            for username in vhost_users:
+                if username not in domain_users:
+                    domain_users.append(ordered_tracker[domain][vhost])
+        vhost_data.append(vhost_template.format(vhost=vhost, count=count))
+    if domain_users:
+        count = len(domain_users)
+        print(domain_template.format(domain=domain, count=count))
+    for data in vhost_data:
+        print(data)
