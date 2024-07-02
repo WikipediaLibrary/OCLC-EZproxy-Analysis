@@ -1,17 +1,14 @@
 import requests
-from dotenv import load_dotenv, dotenv_values
 import gzip
-import os
 from pathlib import Path, PurePath
 import requests
 import re
 import urllib3
 
 from config import Config as config
-from parser import LogListParser
+from .html_parser import LogListParser
 
 
-load_dotenv()
 urllib3.disable_warnings()
 
 session = requests.Session()
@@ -55,9 +52,9 @@ for line in log_list_response.iter_lines():
         parser.link
     )
     log_purepath = PurePath(parser.link)
-    log_filepath = "data/{}".format(log_purepath.name)
+    log_filepath = "./data/{}".format(log_purepath.name)
     if log_purepath.suffix == ".gz":
-        log_filepath = "data/{}".format(log_purepath.stem)
+        log_filepath = "./data/{}".format(log_purepath.stem)
     local_log_file = Path(log_filepath)
     if local_log_file.is_file():
         print("{} exists; skipping download".format(log_filepath))
