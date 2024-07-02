@@ -7,25 +7,23 @@ import requests
 import re
 import urllib3
 
-
+from config import Config as config
 from parser import LogListParser
+
 
 load_dotenv()
 urllib3.disable_warnings()
 
-start_date = int(os.getenv("start_date", 20240101))
-end_date = int(os.getenv("end_date", 20240630))
 session = requests.Session()
-hostname = os.getenv("hostname", "")
-login_url = "https://login.{}/login".format(hostname)
-log_list_url = "https://{}/loggedin/admlog/loglisting.htm".format(hostname)
+login_url = "https://login.{}/login".format(config.hostname)
+log_list_url = "https://{}/loggedin/admlog/loglisting.htm".format(config.hostname)
 
 # Get cookie
 session.get(login_url, verify=False)
 # Set form data, including our desired destination
 data = {
-    "user": os.getenv("user", ""),
-    "pass": os.getenv("password", ""),
+    "user": config.user,
+    "pass": config.password,
     "url": log_list_url,
 }
 # Login - set credentials in .env
@@ -33,7 +31,10 @@ log_list_response = session.post(login_url, data=data, verify=False, stream=True
 # Bail on error
 if log_list_response.status_code != 200:
     exit
+
 # Scrape the log listing
+start_date = int(config.start_date.strftime("%Y%m%d"))
+end_date = int(config.end_date.strftime("%Y%m%d"))
 for line in log_list_response.iter_lines():
     parser = LogListParser()
     fragment = line.decode("utf-8")

@@ -1,6 +1,8 @@
-from datetime import date, timedelta
+from datetime import timedelta
 import os
 from pathlib import Path
+
+from config import Config as config
 
 
 def date_range_list(start_date, end_date):
@@ -13,9 +15,7 @@ def date_range_list(start_date, end_date):
     return date_list
 
 
-start_date = date.fromisoformat(os.getenv("start_date", "20240101"))
-stop_date = date.fromisoformat(os.getenv("end_date", "20240630"))
-date_list = date_range_list(start_date, stop_date)
+date_list = date_range_list(config.start_date, config.end_date)
 
 file_path = "data"
 
@@ -36,7 +36,6 @@ for date in date_list:
                 user_sessions[session_id] = username
 
 user_tracker = []
-partner_search = os.getenv("partner_search", "microform.digital")
 
 for date in date_list:
     user_file = Path(file_path + "/spu{}.log".format(date))
@@ -46,7 +45,7 @@ for date in date_list:
     with open(user_file, "r", encoding="utf-8") as user_file_open:
         file_lines = user_file_open.readlines()
         for line in file_lines:
-            if partner_search in line:
+            if config.partner_search in line:
                 session_id = " ".join(line.split()).split(" ")[2]
                 username = user_sessions[session_id]
 
