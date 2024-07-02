@@ -1,16 +1,19 @@
-import requests
 import gzip
+import logging
 from pathlib import Path, PurePath
 import requests
 import re
+from sys import stderr
 import urllib3
 
 from config import Config as config
 from .html_parser import LogListParser
 
-
+# Setup
 urllib3.disable_warnings()
-
+logger = logging.getLogger()
+logger.addHandler(logging.StreamHandler(stderr))
+logger.setLevel(config.log_level)
 session = requests.Session()
 login_url = "https://login.{}/login".format(config.hostname)
 log_list_url = "https://{}/loggedin/admlog/loglisting.htm".format(config.hostname)
@@ -27,6 +30,7 @@ data = {
 log_list_response = session.post(login_url, data=data, verify=False, stream=True)
 # Bail on error
 if log_list_response.status_code != 200:
+    logger.error("Login failed: HTTP {}".format(log_list_response.status_code))
     exit
 
 # Scrape the log listing
@@ -45,7 +49,7 @@ for line in log_list_response.iter_lines():
     match = re.search(r"\d{8}", parser.link)
     date = int(match.group())
     if date < start_date or date > end_date:
-        print("{} not in date range".format(date))
+        logger.info("{} not in date range".format(date))
         continue
     # Handle the download
     log_url = "https://wikipedialibrary.idm.oclc.org/loggedin/admlog/{}".format(
@@ -57,17 +61,17 @@ for line in log_list_response.iter_lines():
         log_filepath = "./data/{}".format(log_purepath.stem)
     local_log_file = Path(log_filepath)
     if local_log_file.is_file():
-        print("{} exists; skipping download".format(log_filepath))
+        logger.info("{} exists; skipping download".format(log_filepath))
         continue
     print("fetching {}".format(log_url))
     log_file_response = session.get(log_url)
     if log_file_response.status_code != 200:
-        print("{} error; download failed".format(log_file_response.status_code))
+        logger.error("Download error: HTTP {}".format(log_file_response.status_code))
         continue
     if log_purepath.suffix == ".gz":
-        print("decompressing {}".format(log_url))
+        logger.info("decompressing {}".format(log_url))
         content = gzip.decompress(log_file_response.content)
     else:
         content = log_file_response.content
-    print("saving {}".format(log_filepath))
+    logger.info("saving {}".format(log_filepath))
     open(log_filepath, "wb").write(content)

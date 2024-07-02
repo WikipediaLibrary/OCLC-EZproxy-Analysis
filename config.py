@@ -12,3 +12,4 @@ class Config:
     start_date = date.fromisoformat(str(getenv("start_date", 20240101)))
     end_date = date.fromisoformat(str(getenv("end_date", 20240630)))
     partner_search = str(getenv("partner_search", "search.worldcat.org"))
+    log_level = str(getenv("log_level", "error")).upper()
