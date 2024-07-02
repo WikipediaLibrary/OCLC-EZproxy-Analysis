@@ -1,5 +1,7 @@
+from collections import OrderedDict
 from datetime import timedelta
 from pathlib import Path
+from tldextract import extract
 
 from config import Config as config
 
@@ -34,7 +36,7 @@ for date in date_list:
 
                 user_sessions[session_id] = username
 
-user_tracker = []
+tracker = {}
 
 for date in date_list:
     user_file = Path(file_path + "/spu{}.log".format(date))
@@ -44,11 +46,25 @@ for date in date_list:
     with open(user_file, "r", encoding="utf-8") as user_file_open:
         file_lines = user_file_open.readlines()
         for line in file_lines:
-            if config.partner_search in line:
-                session_id = " ".join(line.split()).split(" ")[2]
+            line_split = line.split()
+            session_id = line_split[2]
+            access = line_split[3]
+            vhost = line_split[4]
+            domain = extract(vhost).registered_domain
+            if access == "proxy" and session_id in user_sessions:
                 username = user_sessions[session_id]
+                if domain not in tracker:
+                    tracker[domain] = {}
+                if vhost not in tracker[domain]:
+                    tracker[domain][vhost] = []
+                if username not in tracker[domain][vhost]:
+                    tracker[domain][vhost].append(username)
 
-                if username not in user_tracker:
-                    user_tracker.append(username)
-
-print(len(user_tracker))
+ordered_tracker = OrderedDict(sorted(tracker.items()))
+print("unique users by vhost")
+for domain in ordered_tracker:
+    print("{}:".format(domain))
+    for vhost in ordered_tracker[domain]:
+        count = len(ordered_tracker[domain][vhost])
+        data = "\t{vhost}:\t{count}"
+        print(data.format(vhost=vhost, count=count))
