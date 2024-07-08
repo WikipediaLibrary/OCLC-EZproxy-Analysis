@@ -1,8 +1,2 @@
 .env
-pyvenv.cfg
-bin/
-data/
-lib/
-lib64/
-lib64
-__pycache__/
+__pycache__
