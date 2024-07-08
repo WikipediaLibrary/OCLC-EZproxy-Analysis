@@ -36,6 +36,7 @@ for date in date_list:
                 user_sessions[session_id] = username
 
 tracker = {}
+all_users = []
 
 for date in date_list:
     user_file = Path(file_path + "/spu{}.log".format(date))
@@ -52,6 +53,8 @@ for date in date_list:
             domain = extract(vhost).registered_domain
             if access == "proxy" and session_id in user_sessions:
                 username = user_sessions[session_id]
+                if username not in all_users:
+                    all_users.append(username)
                 if domain not in tracker:
                     tracker[domain] = {}
                 if vhost not in tracker[domain]:
@@ -60,8 +63,14 @@ for date in date_list:
                     tracker[domain][vhost].append(username)
 
 ordered_tracker = dict(sorted(tracker.items()))
-banner = "unique ezproxy users by domain and host between {start_date} and {end_date}:"
-print(banner.format(start_date=config.start_date, end_date=config.end_date))
+banner = "unique ezproxy users {start_date}-{end_date} (inclusive): {total_count}"
+print(
+    banner.format(
+        start_date=config.start_date,
+        end_date=config.end_date,
+        total_count=len(all_users),
+    )
+)
 for domain in ordered_tracker:
     domain_users = []
     domain_template = "{domain}: {count}"
