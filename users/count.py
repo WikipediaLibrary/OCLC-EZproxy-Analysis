@@ -3,17 +3,7 @@ from pathlib import Path
 from tldextract import extract
 
 from config import Config as config
-
-
-def date_range_list(start_date, end_date):
-    # Return list of date objects between start_date and end_date (inclusive).
-    date_list = []
-    curr_date = start_date
-    while curr_date <= end_date:
-        date_list.append(curr_date.strftime("%Y%m%d"))
-        curr_date += timedelta(days=1)
-    return date_list
-
+from helpers import date_range_list
 
 date_list = date_range_list(config.start_date, config.end_date)
 
