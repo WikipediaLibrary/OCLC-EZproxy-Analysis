@@ -52,6 +52,9 @@ class Fetch:
             parser.feed(fragment)
             # check the date embedded in the filename
             match = re.search(r"\d{8}", parser.link)
+            if not match:
+                self.logger.error("No date in filename: {}".format(parser.link))
+                continue
             date = int(match.group())
             if date < self.start_date or date > self.end_date:
                 self.logger.info("{} not in date range".format(date))
