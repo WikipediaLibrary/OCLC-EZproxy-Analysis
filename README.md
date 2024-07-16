@@ -15,5 +15,5 @@ Download, parse, and analyse EZproxy logs
     - `. venv/bin/activate`
     - `pip install -r requirements.txt`
 1. run script
-    - `python main.py`
-    - you may redirect output to file if you desire, eg. `python main.py > ~/exproxy.usercount.20240101-20240630.md`
+    - `./user_count.py`
+    - you may redirect output to file if you desire, eg. `./user_count.py > ~/exproxy.usercount.20240101-20240630.md`
