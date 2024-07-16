@@ -1,56 +1,49 @@
 from datetime import timedelta
-from pathlib import Path
 from tldextract import extract
 
 from config import Config as config
-from helpers import date_range_list
+from helpers import date_range_list, read_files
 
 date_list = date_range_list(config.start_date, config.end_date)
 
-file_path = "data"
-
 user_sessions = {}
 
-for date in date_list:
-    user_file = file_path + "/{}.txt".format(date)
 
-    with open(user_file, "r", encoding="utf-8") as user_file_open:
-        file_lines = user_file_open.readlines()
-        for line in file_lines:
-            if "Login.Success" in line:
-                split_line = " ".join(line.split()).split("|")[0].strip().split(" ")
+def find_users(line):
+    if "Login.Success" in line:
+        split_line = " ".join(line.split()).split("|")[0].strip().split(" ")
 
-                username = " ".join(split_line[4:-1])
-                session_id = split_line[-1]
+        username = " ".join(split_line[4:-1])
+        session_id = split_line[-1]
 
-                user_sessions[session_id] = username
+        user_sessions[session_id] = username
+
+
+read_files(date_list, "{}.txt", find_users)
 
 tracker = {}
 all_users = []
 
-for date in date_list:
-    user_file = Path(file_path + "/spu{}.log".format(date))
-    if not user_file.is_file():
-        print("{} not found".format(user_file))
-        continue
-    with open(user_file, "r", encoding="utf-8") as user_file_open:
-        file_lines = user_file_open.readlines()
-        for line in file_lines:
-            line_split = line.split()
-            session_id = line_split[2]
-            access = line_split[3]
-            vhost = line_split[4]
-            domain = extract(vhost).registered_domain
-            if access == "proxy" and session_id in user_sessions:
-                username = user_sessions[session_id]
-                if username not in all_users:
-                    all_users.append(username)
-                if domain not in tracker:
-                    tracker[domain] = {}
-                if vhost not in tracker[domain]:
-                    tracker[domain][vhost] = []
-                if username not in tracker[domain][vhost]:
-                    tracker[domain][vhost].append(username)
+
+def count_users(line):
+    line_split = line.split()
+    session_id = line_split[2]
+    access = line_split[3]
+    vhost = line_split[4]
+    domain = extract(vhost).registered_domain
+    if access == "proxy" and session_id in user_sessions:
+        username = user_sessions[session_id]
+        if username not in all_users:
+            all_users.append(username)
+        if domain not in tracker:
+            tracker[domain] = {}
+        if vhost not in tracker[domain]:
+            tracker[domain][vhost] = []
+        if username not in tracker[domain][vhost]:
+            tracker[domain][vhost].append(username)
+
+
+read_files(date_list, "spu{}.log", count_users)
 
 ordered_tracker = dict(sorted(tracker.items()))
 banner = "unique ezproxy users {start_date}-{end_date} (inclusive): {total_count}"
