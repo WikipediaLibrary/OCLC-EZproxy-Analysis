@@ -2,7 +2,7 @@ from datetime import timedelta
 from tldextract import extract
 
 from config import Config as config
-from helpers import date_range_list, read_files
+from helpers import LOG_TYPES, date_range_list, read_files
 
 date_list = date_range_list(config.start_date, config.end_date)
 
@@ -10,16 +10,17 @@ user_sessions = {}
 
 
 def find_users(line):
-    if "Login.Success" in line:
-        split_line = " ".join(line.split()).split("|")[0].strip().split(" ")
+    if "Login.Success" not in line:
+        return
+    split_line = " ".join(line.split()).split("|")[0].strip().split(" ")
 
-        username = " ".join(split_line[4:-1])
-        session_id = split_line[-1]
+    username = " ".join(split_line[4:-1])
+    session_id = split_line[-1]
 
-        user_sessions[session_id] = username
+    user_sessions[session_id] = username
 
 
-read_files(date_list, "{}.txt", find_users)
+read_files(date_list, LOG_TYPES["auditfile"], find_users)
 
 tracker = {}
 all_users = []
@@ -43,7 +44,7 @@ def count_users(line):
             tracker[domain][vhost].append(username)
 
 
-read_files(date_list, "spu{}.log", count_users)
+read_files(date_list, LOG_TYPES["spu"], count_users)
 
 ordered_tracker = dict(sorted(tracker.items()))
 banner = "unique ezproxy users {start_date}-{end_date} (inclusive): {total_count}"

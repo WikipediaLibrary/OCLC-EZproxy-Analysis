@@ -1,6 +1,8 @@
 from datetime import timedelta
 from pathlib import Path
 
+LOG_TYPES = {"auditfile": "{}.txt", "ezp": "ezp{}.log", "spu": "spu{}.log"}
+
 
 def date_range_list(start_date, end_date):
     # Return list of date objects between start_date and end_date (inclusive).
