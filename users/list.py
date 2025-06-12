@@ -6,10 +6,13 @@ from tldextract import extract
 from config import Config as config
 from helpers import LOG_TYPES, date_range_list, read_files
 
+from .twlight import TWLightUser
+
 
 class Search:
     date_list = date_range_list(config.start_date, config.end_date)
     user_sessions = {}
+    twlight = TWLightUser()
 
     def __init__(self, search_list):
         for search in search_list:
@@ -26,7 +29,8 @@ class Search:
                     for username in self.user_sessions[session_id]["username"]:
                         user_set.add(username)
                 for username in user_set:
-                    write.writerow([username])
+                    email = self.twlight.get_email(username)
+                    write.writerow([username, email])
 
     def search_in_line(self, line):
         # it's fastest to check the whole line first
