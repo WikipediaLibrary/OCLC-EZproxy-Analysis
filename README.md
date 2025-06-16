@@ -27,7 +27,7 @@ User count:
 - `./user_count.py`
 
 User list:
-- You will need to forward the twlight database port to localhost to run this on your local machine, eg.
+- You will need to forward the production twlight database port to localhost to run this on your local machine, eg.
   - `ssh -L 3306:127.0.0.1:3306 -N $TWLIGHT_HOST`
 - Note that this command will search for the provided ezproxy vhosts and create a username + email list for each speficied vhost under the `./output/` directory
 - `./user_list.py "database-partner.example.com" "journals.database-partner.com"` ...
