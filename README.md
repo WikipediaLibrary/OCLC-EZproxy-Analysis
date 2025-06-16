@@ -26,7 +26,15 @@ Finds usernames correlated to one or more requests; typically used when a proxie
 User count:
 - `./user_count.py`
 
+User list:
+- You will need to forward the production twlight database port to localhost to run this on your local machine, eg.
+  - `ssh -L 3306:127.0.0.1:3306 -N $TWLIGHT_HOST`
+- Note that this command will search for the provided ezproxy vhosts and create a username + email list for each speficied vhost under the `./output/` directory
+- `./user_list.py "database-partner.example.com" "journals.database-partner.com"` ...
+- arguments should be specific hostnames that are unique to a partner, yet accessed by anyone using it. Suggest using the fqdn in the TWLight partner config
+
 User search:
+- Note that this command is intended for searching unique access patterns for abuse reports
 - `./user_search.py "https://database-partner.example.com/request-path1" "/request-path2"` ...
 - arguments may be full request URLs or paths
 

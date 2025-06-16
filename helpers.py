@@ -1,4 +1,5 @@
 from datetime import timedelta
+import pymysql.cursors
 from pathlib import Path
 
 LOG_TYPES = {"auditfile": "{}.txt", "ezp": "ezp{}.log", "spu": "spu{}.log"}
@@ -26,3 +27,14 @@ def read_files(date_list, filename_template, callback):
             file_lines = user_file_open.readlines()
             for line in file_lines:
                 callback(line)
+
+
+def db_cursor(db_config):
+    connection = pymysql.connect(
+        user=db_config["user"],
+        password=db_config["pw"],
+        host=db_config["host"],
+        port=db_config["port"],
+        database=db_config["db"],
+    )
+    return connection.cursor()
